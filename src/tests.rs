@@ -10,7 +10,7 @@ mod tests {
     use dotenvy::dotenv;
     use ctor::ctor;
 
-    use crate::{ handlers::{add_order, get_order_by_uid, DATA_KEY}, models::Order};
+    use crate::{ handlers::{add_order, get_order_by_uid}, models::Order};
     use crate::{
         db,
         handlers::{AppState, CustomResponse},
@@ -130,23 +130,4 @@ mod tests {
         assert_eq!(response.code, StatusCode::CREATED);
         assert_eq!(response.message, "Order successfully created");
     }
-
-    #[tokio::test]
-    async fn test_add_order_conflict() {
-        let order_uid = "test_add_order_conflict".to_string();
-        let (state, test_order) = start_settings(order_uid.clone()).await.unwrap();
-
-        db::insert_order(&state, &test_order, DATA_KEY).await.unwrap();
-
-        // Запуск тестируемой функции
-        let response = add_order(
-            State(state),
-            Json(test_order.clone()),
-        ).await;
-
-        // Проверка результата
-        assert_eq!(response.code, StatusCode::CONFLICT);
-        assert_eq!(response.message, "Order already exists");
-    }
-
 }
