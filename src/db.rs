@@ -17,8 +17,9 @@ lazy_static! {
 pub async fn connect() -> Result<Client, Error> {
     let database_user = env::var("DATABASE_USER").expect("DATABASE_USER must be set");
     let database_password = env::var("DATABASE_PASSWORD").expect("DATABASE_PASSWORD must be set");
+    let database_port = env::var("DATABASE_PORT").expect("DATABASE_PORT must be set");
 
-    let database_url = format!("host=localhost user={database_user} password={database_password}");
+    let database_url = format!("host=localhost user={database_user} password={database_password} port={database_port}");
     let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
 
     tokio::spawn(async move {

@@ -26,7 +26,7 @@ async fn publish_order(api_url: &str, order: &Order) -> Result<(), Box<dyn Error
         .await?;
 
     if response.status().is_success() {
-        info!("Order published successfully: {:?}", order);
+        info!("Order published successfully: {:?}", order.order_uid);
     } else {
         error!("Failed to publish order. Status: {}", response.status());
     }
