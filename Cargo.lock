@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "l1"
+name = "wc"
 version = "0.1.0"

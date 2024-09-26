@@ -1,59 +1,48 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{mpsc, Arc};
-use std::thread;
+use std::env;
+use std::fs;
+use std::process;
 
-fn get_num_cores() -> usize {
-    thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(1) as usize
+fn count_lines(content: &str) -> usize {
+    content.lines().count()
+}
+
+fn count_words(content: &str) -> usize {
+    content.split_whitespace().count()
+}
+
+fn count_chars(content: &str) -> usize {
+    content.chars().count()
 }
 
 fn main() {
-    let numbers_count: usize = 10;
-    let numbers: Arc<Vec<i32>> = Arc::new((1..=numbers_count as i32).collect());
+    let args: Vec<String> = env::args().collect();
 
-    let mut handles = Vec::new();
-    let num_cores = get_num_cores();
-
-    let num_threads = num_cores.min(numbers_count);
-
-    let index = Arc::new(AtomicUsize::new(0));
-    let (tx , rx) = mpsc::channel();
-
-    for _ in 0..num_threads {
-        let numbers = Arc::clone(&numbers);
-        let index = Arc::clone(&index);
-        let tx1 = tx.clone();
-
-        let handle = thread::spawn(move || {
-            loop {
-                let i = index.fetch_add(1, Ordering::SeqCst);
-
-                if i >= numbers.len() {
-                    break;
-                }
-                
-                let num = numbers[i];
-                let square = num * num;
-                tx1.send(square).unwrap();
-            }
-        });
-
-        handles.push(handle);
+    if args.len() < 2 {
+        eprintln!("Usage: wc [-c | -l | -w] <filename>");
+        process::exit(1);
     }
 
-    drop(tx);
+    let mut mode = "-w"; 
+    let mut filename = &args[1];
 
-    let mut result = 0;
-
-    for received in rx {
-        result += received;
+    if args.len() == 3 {
+        mode = &args[1];
+        filename = &args[2];
     }
 
-    for handle in handles {
-        handle.join().unwrap();
+    // Читаем содержимое файла
+    let content = match fs::read_to_string(filename) {
+        Ok(content) => content,
+        Err(_) => {
+            eprintln!("Error reading file: {}", filename);
+            process::exit(1);
+        }
+    };
+
+    // Обрабатываем режим и выводим результат
+    match mode {
+        "-l" => println!("{}", count_lines(&content)),
+        "-c" => println!("{}", count_chars(&content)),
+        "-w" | _ => println!("{}", count_words(&content)),
     }
-
-    println!("Sum: {result}");
-
 }
